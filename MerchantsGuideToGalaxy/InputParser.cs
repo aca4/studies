@@ -1,65 +1,130 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Globalization;
+using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MerchantsGuideToGalaxy
 {
     public class InputParser
-    {
-        public string UnitPattern { get; } = @"^(\w+ )+is [IVXLCCDM]$";        
-        public string MetalPattern { get; } = @"^(\w+ )+(Silver|Gold|Iron) is \d+ Credits$";
-        //considerar que pode nao ter much/many?
-        public string QuestionPattern { get; } = @"^how (much|many Credits) is (\w+ )+(Silver |Gold |Iron )?\?$";
+    {        
+        private Dictionary<string, string> intergalaticDictionary;
         private string invalidQuery = "I have no idea what you are talking about";
 
-        private Dictionary<string, string> dictionary = new Dictionary<string, string>();
-
-        private List<string> sentences = new List<string>();
-
-        //com ou sem a entrada como parametro?
-        public List<string> Translate()
+        public InputParser()
         {
-            List<string> answers = new List<string>();
-
-            foreach (var line in sentences)
-            {
-                if (Regex.IsMatch(line, UnitPattern))
-                {
-                    DefineRomanNumeral(line);
-                }
-                else if (Regex.IsMatch(line, MetalPattern))
-                {
-                    //do credits calculation
-                }
-                else if (Regex.IsMatch(line, QuestionPattern))
-                {
-                    //answer question
-                }
-                else
-                {
-                    answers.Add(invalidQuery);
-                }
-            }
-
-            return answers;
+            intergalaticDictionary = new Dictionary<string, string>();
         }
 
-        private void DefineRomanNumeral(string sentence)
+        /// <summary>
+        /// Reads lines from input files and process them
+        /// </summary>
+        /// <param name="filePath">The path of the input file</param>
+        public void Translate(string filePath)
+        {
+            string sentence;
+
+            try
+            {
+                using (StreamReader sr = new StreamReader(filePath))
+                {
+                    while ((sentence = sr.ReadLine()) != null)
+                    {
+                        Line line = new Line(sentence);
+                        ParseLine(line);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reading input file: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Parses line according to its type
+        /// </summary>
+        /// <param name="line">Line from input file</param>
+        private void ParseLine(Line line)
+        {
+            switch (line.Type)
+            {
+                case LineType.Unit:
+                    DefineRomanNumeral(line.Text);
+                    break;
+                case LineType.Metal:
+                    DefineCredits(line.Text);
+                    break;
+                case LineType.Question:
+                    //answer question
+                    break;
+                case LineType.Invalid:
+                    Console.WriteLine(invalidQuery);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Adds entry into dictionary
+        /// </summary>
+        /// <param name="sentence"></param>
+        public void DefineRomanNumeral(string sentence) //TODO: change name
         {
             Regex regex = new Regex(@"\bis\b");
             string[] tokens = regex.Split(sentence);
 
-            //TODO: verificar se são sempre dois mesmo
-            dictionary.Add(tokens[0], tokens[1]);
+            string key = tokens[0].Trim();
+            string value = tokens[1].Trim();
+
+            if (!intergalaticDictionary.ContainsKey(key))
+            {
+
+                intergalaticDictionary.Add(key, value);
+            }
         }
 
         //TODO: change name
-        private void DefineCredits(string sentence)
+        public void DefineCredits(string sentence)
         {
+            Match firstPartBeforeIs = Regex.Match(sentence, @"^(\w+ )+(Silver|Gold|Iron)");
 
-        }
+            string matchString = firstPartBeforeIs.Value;
+
+            string metal = Regex.Match(firstPartBeforeIs.Value, @"(Silver|Gold|Iron)").Value;
+
+            string temp = matchString.Replace(metal, "").Trim();
+
+            string[] intergalaticNumbers = temp.Split(' ');
+
+            RomanNumeral romanNumeral = new RomanNumeral();
+            int sumOfRomanNumebers = 0;
+            string romanNumber = "";
+
+            foreach (var item in intergalaticNumbers)
+            {
+                var romanChar = intergalaticDictionary[item];
+                int arabicNumber = romanNumeral.GetNumberFromRomanChar(romanChar[0]);
+                sumOfRomanNumebers += arabicNumber;
+                romanNumber += romanChar;
+            }
+
+            //foreach (var item in intergalaticNumbers)
+            //{
+            //    var value = intergalaticDictionary[item];
+            //    int temp2= romanNumeral.ConvertToNumber(value);
+            //    sumOfRomanNumebers += temp2;
+            //    romanNumber += value;
+            //}
+
+            int intergalaticNumbersConverted = romanNumeral.ConvertToNumber(romanNumber);
+
+            double numberOfCredits = Convert.ToDouble(Regex.Match(sentence, @"\d+").Value);
+
+            double metalValue = numberOfCredits / sumOfRomanNumebers;
+
+            intergalaticDictionary.Add(metal, Convert.ToString(metalValue, CultureInfo.InvariantCulture));         
+        }        
     }
 }

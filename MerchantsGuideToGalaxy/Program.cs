@@ -8,10 +8,18 @@ namespace MerchantsGuideToGalaxy
 {
     class Program
     {
+        /// <summary>
+        /// Entry point. Input file path should be passed as argument
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
+            string filePath = args[0];
             InputParser parser = new InputParser();
-            //parser.DefineRomanNumeral("glob bob is I");
+            parser.Translate(filePath);
+
+            Console.WriteLine("Press any key to close");
+            Console.ReadLine();
         }
     }
 }
