@@ -105,8 +105,8 @@ namespace MerchantsGuideToGalaxy
             foreach (var item in intergalaticNumbers)
             {
                 var romanChar = intergalaticDictionary[item];
-                int arabicNumber = romanNumeral.GetNumberFromRomanChar(romanChar[0]);
-                sumOfRomanNumebers += arabicNumber;
+                //int arabicNumber = romanNumeral.GetNumberFromRomanChar(romanChar[0]);
+                //sumOfRomanNumebers += arabicNumber;
                 romanNumber += romanChar;
             }
 

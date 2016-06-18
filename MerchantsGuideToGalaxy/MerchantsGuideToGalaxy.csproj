@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Exceptions\InvalidRomanNumeralException.cs" />
     <Compile Include="InputParser.cs" />
     <Compile Include="Line.cs" />
     <Compile Include="LineType.cs" />

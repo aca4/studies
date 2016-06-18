@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="InputParserUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RomanNumeralUnitTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MerchantsGuideToGalaxy\MerchantsGuideToGalaxy.csproj">
