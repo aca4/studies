@@ -1,5 +1,4 @@
-﻿using MerchantsGuideToGalaxy.Exceptions;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,8 +10,7 @@ namespace MerchantsGuideToGalaxy
     {        
         private Dictionary<string, string> intergalaticDictionary;
         private Dictionary<string, double> metalsDictionary;
-        private RomanNumeral romanNumeral;
-        
+        private RomanNumeral romanNumeral;        
 
         public InputParser()
         {
@@ -35,7 +33,7 @@ namespace MerchantsGuideToGalaxy
                 {
                     while ((sentence = sr.ReadLine()) != null)
                     {
-                        Line line = new Line(sentence);
+                        Line line = new Line(sentence.ToLower());
                         ParseLine(line);
                     }
                 }
@@ -75,9 +73,13 @@ namespace MerchantsGuideToGalaxy
                         break;
                 }
             }
-            catch (InvalidRomanNumeralException irne)
+            //catch (InvalidRomanNumeralException irne)
+            //{
+            //    Console.WriteLine(Util.GetInvalidSentenceQueryErrorMessage() + ": " + irne.Message);
+            //}
+            catch (Exception e)
             {
-                Console.WriteLine(Util.GetInvalidSentenceQueryErrorMessage() + ": " + irne.Message);
+                Console.WriteLine(Util.GetInvalidSentenceQueryErrorMessage());
             }
 
         }
@@ -95,8 +97,14 @@ namespace MerchantsGuideToGalaxy
 
             if (!intergalaticDictionary.ContainsKey(key))
             {
-                intergalaticDictionary.Add(key, value);
-            }            
+                intergalaticDictionary.Add(key, value.ToUpper());
+            }
+            else
+            {
+                intergalaticDictionary[key] = value.ToUpper();
+            }
+
+            Console.WriteLine(key + " set to " + value.ToUpper());
         }
 
         /// <summary>
@@ -134,7 +142,16 @@ namespace MerchantsGuideToGalaxy
 
             double metalValue = numberOfCredits / intergalaticNumbersConverted;
 
-            metalsDictionary.Add(groupMetal, metalValue);         
+            if (!metalsDictionary.ContainsKey(groupMetal))
+            {
+                metalsDictionary.Add(groupMetal, metalValue);
+            }
+            else
+            {
+                metalsDictionary[groupMetal] = metalValue;
+            }    
+            
+            Console.WriteLine(groupMetal + " set to " + metalValue);
         }
 
         /// <summary>

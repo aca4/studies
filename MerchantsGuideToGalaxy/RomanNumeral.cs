@@ -58,7 +58,7 @@ namespace MerchantsGuideToGalaxy
         /// </summary>
         /// <param name="romanNumeral"></param>
         /// <returns></returns>
-        public bool FollowsRepetitionRule(string romanNumeral)
+        private bool FollowsRepetitionRule(string romanNumeral)
         {
             string[] incorrectValues = { "(IIII+)", "(XXXX+)", "(CCCC+)", "(MMMM+)", "(DD+)", "(LL+)", "(VV+)" };
 
@@ -80,20 +80,59 @@ namespace MerchantsGuideToGalaxy
         /// </summary>
         /// <param name="numbers"></param>
         /// <returns></returns>
-        public bool FollowsSubtractionRule(List<int> numbers)
+        private bool FollowsSubtractionRule(List<int> numbers)
         {
             int currentNumber;
             int nextNumber;
+            bool previouslySubtracted = false;
+            bool isFirstDigit = true;
 
             for (int i = 0; i < numbers.Count - 1; i++) //the last number won't be subtracted
-            {
+            {                 
                 currentNumber = numbers[i];
                 nextNumber = numbers[i + 1];
 
-                if ((currentNumber < nextNumber) && !CanBeSubtracted(currentNumber, nextNumber))
+                if (currentNumber < nextNumber)
                 {
-                    throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                    bool canBe = CanBeSubtracted(currentNumber, nextNumber);
+                    previouslySubtracted = canBe;
+
+                    if (!canBe)
+                    {
+                        throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                    }
+
+                    if (!isFirstDigit)
+                    {
+                        int previousNumber = numbers[i - 1];
+                        if (previousNumber == currentNumber)
+                        {
+                            throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                        }
+                    }
+
                 }
+                else if ((currentNumber > nextNumber) && previouslySubtracted)
+                {
+                    if (numbers.Count == i + 2) //last
+                        throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                    //previouslySubtracted = false;
+                }
+                else
+                {
+                    previouslySubtracted = false;
+                }
+                //else if (currentNumber != nextNumber)
+                //{
+                //    throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                //}
+                //if ((currentNumber < nextNumber)) 
+                //{
+                //    if (!CanBeSubtracted(currentNumber, nextNumber))
+                //        throw new InvalidRomanNumeralException("Subtraction rule is not respected!");
+                //}
+
+                isFirstDigit = false;
             }
 
             return true;
@@ -113,6 +152,14 @@ namespace MerchantsGuideToGalaxy
             {
                 throw new InvalidRomanNumeralException("V, L, and D can never be subtracted!");
             }
+
+            //if (subtrahend < minuend)
+            //{
+            //if (minuend <= 10 * subtrahend)
+            //return true;
+            //}
+
+            //return false;
 
             return minuend <= 10 * subtrahend;
         }
@@ -146,7 +193,7 @@ namespace MerchantsGuideToGalaxy
         /// </summary>
         /// <param name="romanSymbol">A roman symbol</param>
         /// <returns>Number equivalent to roman symbol</returns>
-        public int GetNumberFromRomanChar(char romanSymbol)
+        private int GetNumberFromRomanChar(char romanSymbol)
         {
             int number = 0;
 

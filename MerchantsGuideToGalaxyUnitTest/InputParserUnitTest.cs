@@ -9,35 +9,41 @@ namespace MerchantsGuideToGalaxyUnitTest
     public class InputParserUnitTest
     {
         [TestMethod]
-        public void IsUnit()
+        public void IsIntergalaticDigit()
         {
             string sentence = "lallaa lelele is I";
-            InputParser inputParser = new InputParser();
-            //Assert.IsTrue(Regex.IsMatch(sentence, inputParser.UnitPattern));
+            Line line = new Line(sentence.ToLower());
+            Assert.IsTrue(Regex.IsMatch(sentence, line.IntergalaticDigitPattern));
         }
 
         [TestMethod]
         public void IsMetal()
         {
-            string sentence = "glob glob Silver is 34 Credits";
-            InputParser inputParser = new InputParser();
-           // Assert.IsTrue(Regex.IsMatch(sentence, inputParser.MetalPattern));
+            string sentence = "glob glob Silver is 34 credits";
+            Line line = new Line(sentence.ToLower());
+            Assert.IsTrue(Regex.IsMatch(sentence, line.MetalPattern));
         }
 
         [TestMethod]
-        public void IsQuestion()
+        public void IsHowMuchQuestion()
         {
             string sentence = "how much is pish tegj glob glob ?";
-            InputParser inputParser = new InputParser();
-           // Assert.IsTrue(Regex.IsMatch(sentence, inputParser.QuestionPattern));
+            Line line = new Line(sentence.ToLower());
+            Assert.IsTrue(Regex.IsMatch(sentence, line.HowMuchQuestionPattern));
         }
 
         [TestMethod]
-        public void TestTranslate()
+        public void IsHowManyQuestion()
         {
-            string expectedResult = "I have no idea what you are talking about";
-            InputParser inputParser = new InputParser();
-            //Assert.AreEqual(expectedResult, inputParser.Translate());           
-        }
+            string sentence = "how many Credits is glob prok Iron ?";
+            Line line = new Line(sentence.ToLower());
+            Assert.IsTrue(Regex.IsMatch(sentence, line.HowMuchQuestionPattern));
+        } 
+        
+        [TestMethod]
+        public void IsValidInput()
+        {
+
+        }       
     }
 }
