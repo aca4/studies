@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -10,9 +10,8 @@ namespace MerchantsGuideToGalaxy
     {        
         private Dictionary<string, string> intergalaticDictionary;
         private Dictionary<string, double> metalsDictionary;
+        private RomanNumeral romanNumeral;
         private string invalidQuery = "I have no idea what you are talking about";
-        RomanNumeral romanNumeral;
-        
 
         public InputParser()
         {
@@ -22,7 +21,7 @@ namespace MerchantsGuideToGalaxy
         }
 
         /// <summary>
-        /// Reads lines from input files and process them
+        /// Reads lines from input file and process them
         /// </summary>
         /// <param name="filePath">The path of the input file</param>
         public void Translate(string filePath)
@@ -54,14 +53,17 @@ namespace MerchantsGuideToGalaxy
         {
             switch (line.Type)
             {
-                case LineType.Unit:
-                    DefineRomanNumeral(line.Text);
+                case LineType.IntergalaticDigit:
+                    DefineIntergalaticDigit(line.Text);
                     break;
                 case LineType.Metal:
-                    DefineCredits(line.Text);
+                    DefineMetalValue(line.Text);
                     break;
-                case LineType.Question:
-                    AnswerQuestion(line.Text);
+                case LineType.HowManyQuestion:
+                    AnswerHowManyQuestion(line.Text);
+                    break;
+                case LineType.HowMuchQuestion:
+                    AnswerHowMuchQuestion(line.Text);
                     break;
                 case LineType.Invalid:
                     Console.WriteLine(invalidQuery);
@@ -72,48 +74,48 @@ namespace MerchantsGuideToGalaxy
         }
 
         /// <summary>
-        /// Adds entry into dictionary
+        /// Retrieves intergalatic digit value and adds it into intergalaticDictionary
         /// </summary>
         /// <param name="sentence"></param>
-        public void DefineRomanNumeral(string sentence) //TODO: change name
+        public void DefineIntergalaticDigit(string sentence)
         {
-            Regex regex = new Regex(@"\bis\b");
-            string[] tokens = regex.Split(sentence);
+            string[] substrings = Util.SplitByIs(sentence);
 
-            string key = tokens[0].Trim();
-            string value = tokens[1].Trim();
+            string key = substrings[0];
+            string value = substrings[1];
 
             if (!intergalaticDictionary.ContainsKey(key))
             {
-
                 intergalaticDictionary.Add(key, value);
-            }
-
-            //if (!intergalaticDictionary.ContainsKey(value))
-            //{
-            //    intergalaticDictionary.Add(value, romanNumeral.GetNumberFromRomanChar(value[0]).ToString());
-            //}
+            }            
         }
 
-        //TODO: change name
-        public void DefineCredits(string sentence)
+        /// <summary>
+        /// Calculates metal value and adds its into metalsDictionary
+        /// </summary>
+        /// <param name="sentence"></param>
+        public void DefineMetalValue(string sentence)
         {
-            Match firstPartBeforeIs = Regex.Match(sentence, @"^(\w+ )+(Silver|Gold|Iron)");
+            string[] substrings = Util.SplitByIs(sentence);
 
-            string matchString = firstPartBeforeIs.Value;
+            Regex regex = new Regex(@"(?<groupInterNum>(\w+ )+)+(?<groupMetal>\w+)");
+            MatchCollection matches = regex.Matches(substrings[0]);
+            IEnumerator matchesEnum = matches.GetEnumerator();
+            string groupIntergalaticNumbers = "";
+            string groupMetal = "";            
 
-            string metal = Regex.Match(firstPartBeforeIs.Value, @"(Silver|Gold|Iron)").Value;
+            if (matchesEnum.MoveNext())
+            {
+                Match match = (Match)matchesEnum.Current;
+                groupIntergalaticNumbers = match.Groups["groupInterNum"].Value.Trim();
+                groupMetal = match.Groups["groupMetal"].Value;
+            }
 
-            string temp = matchString.Replace(metal, "").Trim();
-
-            string[] intergalaticNumbers = temp.Split(' ');
-
-            RomanNumeral romanNumeral = new RomanNumeral();            
+            string[] intergalaticNumbers = groupIntergalaticNumbers.Split(' ');
             string romanNumber = "";
-
             foreach (var item in intergalaticNumbers)
             {
-                var romanChar = intergalaticDictionary[item];                
+                var romanChar = intergalaticDictionary[item];
                 romanNumber += romanChar;
             }
 
@@ -123,73 +125,78 @@ namespace MerchantsGuideToGalaxy
 
             double metalValue = numberOfCredits / intergalaticNumbersConverted;
 
-            metalsDictionary.Add(metal, metalValue);         
+            metalsDictionary.Add(groupMetal, metalValue);         
         }
 
-        public void AnswerQuestion(string sentence)
+        /// <summary>
+        /// Calculates the answer for a question of type "how many"
+        /// </summary>
+        /// <param name="sentence"></param>
+        public void AnswerHowManyQuestion(string sentence)
         {
-            Regex regex = new Regex(@"(?<group1>\d+ )+(?<group2>\w+)");
-            Match match = regex.Match("3231 234 kalala");
-            string group1 = match.Groups["group1"].Value;
-            string group2 = match.Groups["group2"].Value;
+            string[] substrings = Util.SplitByIs(sentence);
 
-            Regex regex2 = new Regex(@"^(?<group1>how many Credits is) (?<group2>\w+ )+\?$");
-            Match match2 = regex2.Match(sentence);
-            group1 = match2.Groups["group1"].Value;
-            group2 = match2.Groups["group2"].Value;
-
-            Regex regex3 = new Regex(@"^(?<group1>how many Credits is) (\w+ )+(?<group3>[A-Z][a-z]\w+) \?$");
-            Match match3 = regex3.Match(sentence);
-            group1 = match3.Groups["group1"].Value;
-            group2 = match3.Groups["group2"].Value;
-            string group3 = match3.Groups["group3"].Value;
-
-            string[] stringSeparators = new string[] { "is" };
-            string[] pqp = sentence.Split(stringSeparators, StringSplitOptions.RemoveEmptyEntries);
-
-            string t = pqp[1].Trim();
-            t = t.Substring(0, t.Length - 1);
-            t = t.Trim();
-
-            string[] pqp2 = t.Split(' ');
-
-            double totalValue = 0;
-
-           
-            string romanNumber = "";
-            for(int i =0; i < pqp2.Length - 1; i++)
+            Regex regex = new Regex(@"(?<groupInterNum>(\w+ )+)+(?<groupMetal>\w+) \?$");
+            MatchCollection matches = regex.Matches(substrings[1]);
+            IEnumerator matchesEnum = matches.GetEnumerator();
+            string groupIntergalaticNumbers = "";
+            string groupMetal = "";
+            
+            if (matchesEnum.MoveNext())
             {
-                var romanChar = intergalaticDictionary[pqp2[i]];
-                romanNumber += romanChar;
+                Match match = (Match)matchesEnum.Current;
+                groupIntergalaticNumbers = match.Groups["groupInterNum"].Value.Trim();
+                groupMetal = match.Groups["groupMetal"].Value;
+            }           
+
+            string romanNumber = "";           
+            string[] intergalaticNumbers = groupIntergalaticNumbers.Split(' ');
+            
+            for (int i = 0; i < intergalaticNumbers.Length; i++)
+            {
+                romanNumber += intergalaticDictionary[intergalaticNumbers[i]];
             }
 
-            int intergalaticNumbersConverted = romanNumeral.ConvertToNumber(romanNumber);
-            double metalValue = metalsDictionary[pqp2[pqp2.Length - 1]];
+            int intergalaticNumbersValue = romanNumeral.ConvertToNumber(romanNumber);
+            double metalValue = metalsDictionary[groupMetal];
+            
+            double answer = intergalaticNumbersValue * metalValue;
+            string outputMessage = groupIntergalaticNumbers + " " + groupMetal + " is " + answer;
 
-            totalValue = intergalaticNumbersConverted * metalValue;
+            Console.WriteLine(outputMessage);           
+        }
 
-            Console.WriteLine(totalValue);
+        /// <summary>
+        /// Calculates the answer for a question of type "how much"
+        /// </summary>
+        /// <param name="sentence"></param>
+        public void AnswerHowMuchQuestion(string sentence)
+        {
+            string[] substrings = Util.SplitByIs(sentence);
 
-            //Regex regex = new Regex(@"\bis\b");
-            //string[] tokens = regex.Split(sentence);
-            //double response = 0;
+            Regex regex = new Regex(@"(?<groupInterNum>(\w+ )+)\?$");
+            MatchCollection matches = regex.Matches(substrings[1]);
+            IEnumerator matchesEnum = matches.GetEnumerator();
+            string groupIntergalaticNumbers = "";                  
 
-            //Match firstPartBeforeIs = Regex.Match(tokens[1], @"(\w+ )+");
-            //firstPartBeforeIs = Regex.Match(sentence, @"^how many Credits is (\w+ )+([A-Z][a-z]\w+) \?$");
-            ////@"^how many Credits isd+ (\w+ )+([A-Z][a-z]\w+) \?$"
-            ////TODO: check groups on match
-            //string what = firstPartBeforeIs.Groups["groupMetal"].Value;
+            if (matchesEnum.MoveNext())
+            {
+                Match match = (Match)matchesEnum.Current;
+                groupIntergalaticNumbers = match.Groups["groupInterNum"].Value.Trim();                
+            }
 
-            //string[] values = firstPartBeforeIs.Value.Trim().Split(' ');
+            string romanNumber = "";            
+            string[] intergalaticNumbers = groupIntergalaticNumbers.Split(' ');
 
-            //foreach (var token in values)
-            //{
-            //    string vixe = intergalaticDictionary[token];
+            for (int i = 0; i < intergalaticNumbers.Length; i++)
+            {
+                romanNumber += intergalaticDictionary[intergalaticNumbers[i]];
+            }
 
-            //    //if (romanNumeral.r)
+            int answer = romanNumeral.ConvertToNumber(romanNumber);
 
-
-            //}
+            string outputMessage = groupIntergalaticNumbers + " is " + answer;
+            Console.WriteLine(outputMessage);
         }
     }
 }
